@@ -2,7 +2,7 @@
 //
 // started: Jan 21, 2022  G. D. (Joe) Young <jyoung@islandnet.com>
 //
-// revised:
+// revised: Feb 15/22 - subroutines for I2C i/o
 //
 //
 
@@ -13,9 +13,63 @@ DS2482::DS2482( uint8_t _i2cAdr ) {
 	I2Cadr = (int)_i2cAdr;
 }//constructor
 
-void DS2482::begin( ) {
+void DS2482::begin( ) {		//empty placeholder - may use if I2C is shared; setup restarting
 
 } //begin
+
+//these 4 functions collect all I2C i/o
+
+uint8_t DS2482::owcmd( uint8_t cmd ){
+	Wire.beginTransmission( I2Cadr );
+	Wire.write( cmd );
+	Wire.endTransmission( );
+	Wire.requestFrom( (int)I2Cadr, (int)1 );
+	return Wire.read( );
+} // owcmd( cmd )
+
+
+uint8_t DS2482::owcmd( uint8_t cmd, uint8_t dat ) {
+	Wire.beginTransmission( I2Cadr );
+	Wire.write( cmd );
+	Wire.write( dat );
+	Wire.endTransmission( );
+	Wire.requestFrom( (int)I2Cadr, (int)1 );
+	return Wire.read( );
+} // owcmd( cmd, arg )
+
+uint8_t DS2482::owcmdw( uint8_t cmd ) {
+	uint8_t status = owcmd( cmd );
+	return owwait( status );
+} // owcmdw( cmd )
+
+uint8_t DS2482::owcmdw( uint8_t cmd, uint8_t dat ) {
+	uint8_t status = owcmd( cmd, dat );
+	return owwait( status );
+}
+
+
+uint8_t DS2482::owwait( uint8_t status ) {
+	int8_t poll_count = 0;
+	do {
+		Wire.requestFrom( I2Cadr, 1 );
+//		status = Wire.read( ) & 1<<(ST_1WB);
+    status = Wire.read( );                //keep all bits for further tests
+	} while( (status & 1<<(ST_1WB)) && (poll_count++ < POLL_LIMIT) );
+	#ifdef DEBUG
+		Serial.print( " * status " );
+		Serial.println( status, HEX );
+		Serial.print( " * poll_count " );
+		Serial.println( poll_count, DEC );
+	#endif
+	// check for failure due to poll limit reached
+	if (poll_count >= POLL_LIMIT)
+	{
+		DS2482_reset();
+		return 0;
+	}
+	return status;
+} // owwait( )
+
 
 //--------------------------------------------------------------------------
 // DS2428 Detect routine that sets the I2C address and then performs a
@@ -57,16 +111,16 @@ bool DS2482::DS2482_detect( )
 bool DS2482::DS2482_reset()
 {
    uint8_t status;
-
+#if 0
   Wire.beginTransmission( I2Cadr );
   Wire.write( CMD_DRST );
   Wire.endTransmission( );
   Wire.requestFrom( (int)I2Cadr, (int)1 );
   status = Wire.read( );
-  
-   // check for failure due to incorrect read back of status
-   return ((status & 0xF7) == 0x10);
-}
+#endif
+	status = owcmd( CMD_DRST );
+	return ((status & 0xF7) == 0x10);
+} //DS2482_reset( )
 
 //--------------------------------------------------------------------------
 // Write the configuration register in the DS2482. The configuration
@@ -78,20 +132,23 @@ bool DS2482::DS2482_reset()
 //
 bool DS2482::DS2482_write_config(uint8_t config)
 {
-   uint8_t read_config;
-
+	uint8_t read_config;
+#if 0
   Wire.beginTransmission( I2Cadr );
   Wire.write( CMD_WCFG );
   Wire.write( config | ( ~config << 4 ) );
   Wire.endTransmission( );
   Wire.requestFrom( I2Cadr, 1 );
   read_config = Wire.read( );
+#endif
+	read_config = owcmd( CMD_WCFG, ( config | ( ~config<<4 ) ) );
    // check for failure due to incorrect read back
    #ifdef DEBUG
      Serial.print( " * configReadBack (BIN): " );
      Serial.println( read_config, BIN );
    #endif
-   if (config != read_config)
+
+   if(config != read_config )
    {
       // handle error
       // ...
@@ -113,6 +170,7 @@ bool DS2482::DS2482_write_config(uint8_t config)
 bool DS2482::OWReset( )
 {
    uint8_t status;
+#if 0
    int poll_count = 0;
 
   Wire.beginTransmission( I2Cadr );
@@ -139,6 +197,8 @@ bool DS2482::OWReset( )
       DS2482_reset();
       return false;
    }
+#endif
+	status = owcmdw( CMD_1WRS );
 
    // check for short condition
    if (status & (1<<ST_SD))
@@ -191,8 +251,7 @@ uint8_t DS2482::OWTouchBit(uint8_t sendbit)
 {
    uint8_t status;
    int poll_count = 0;
-   // loop checking 1WB bit for completion of 1-Wire operation
-   // abort if poll limit reached
+#if 0
   Wire.beginTransmission( I2Cadr );
   Wire.write( CMD_1WSB );
   Wire.write( sendbit ? 0x80 : 0x00 );
@@ -212,7 +271,8 @@ uint8_t DS2482::OWTouchBit(uint8_t sendbit)
       DS2482_reset();
       return 0;
    }
-
+#endif
+	status = owcmdw( CMD_1WSB, (sendbit ? 0x80 : 0x00) );
    // return bit state
    if (status & 1<<(ST_SBR))
       return 1;
@@ -233,6 +293,7 @@ uint8_t DS2482::OWTouchBit(uint8_t sendbit)
 //
 void DS2482::OWWriteByte(uint8_t sendbyte)
 {
+#if 0
    uint8_t status;
    int poll_count = 0;
 
@@ -256,6 +317,8 @@ void DS2482::OWWriteByte(uint8_t sendbyte)
       // ...
       DS2482_reset();
    }
+#endif
+	owcmdw( CMD_1WWB, sendbyte );
 }// OWWriteByte( )
 
 
@@ -267,6 +330,7 @@ void DS2482::OWWriteByte(uint8_t sendbyte)
 //
 uint8_t DS2482::OWReadByte(void)
 {
+#if 0
    uint8_t data, status;
    int poll_count = 0;
 
@@ -297,7 +361,9 @@ uint8_t DS2482::OWReadByte(void)
   data = Wire.read( );
   
    return data;
-
+#endif
+	owcmdw( CMD_1WRB );
+	return( owcmd( CMD_SRP, DATAREG ) );
 } //OWReadByte( )
 
 
@@ -524,33 +590,7 @@ bool DS2482::OWSearch()
 //
 uint8_t DS2482::DS2482_search_triplet(int search_direction)
 {
-   uint8_t status;
-   int poll_count = 0;
-
-   // loop checking 1WB bit for completion of 1-Wire operation
-   // abort if poll limit reached
-  Wire.beginTransmission( I2Cadr );
-  Wire.write( CMD_1WT );
-  Wire.write(search_direction ? 0x80 : 0x00);
-  Wire.endTransmission( );
-  Wire.requestFrom( I2Cadr, 1 );
-  status = Wire.read( );
-  do {
-    Wire.requestFrom( I2Cadr, 1 );
-    status = Wire.read( );
-  } while( (status & (1<<ST_1WB)) && (poll_count++ < POLL_LIMIT) );
-
-   // check for failure due to poll limit reached
-   if (poll_count >= POLL_LIMIT)
-   {
-      // handle error
-      // ...
-      DS2482_reset();
-      return 0;
-   }
-
-   // return status byte
-   return status;
+	return( owcmdw( CMD_1WT, search_direction ? 0x80 : 0x00 ) );
 } //DS2482_search_triplet( )
 
 

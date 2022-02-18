@@ -3,7 +3,7 @@
 // Started: Jan 21, 2022  G. D. (Joe) Young <jyoung@islandnet.com>
 //
 // Revised: Feb  1/22 - make calc_crc8 public
-//
+//          Feb 15/22 - subroutines for I2C i/o
 //
 //
 // A library of functions from Dallas/Maxim Application Note AN3684, altered to
@@ -95,6 +95,13 @@ private:
 	int LastFamilyDiscrepancy;
 	bool LastDeviceFlag;
 	uint8_t crc8;
+
+// I2C i/o collection
+	uint8_t owcmd( uint8_t cmd );
+	uint8_t owcmd( uint8_t cmd, uint8_t dat );
+	uint8_t owcmdw( uint8_t cmd );
+	uint8_t owcmdw( uint8_t cmd, uint8_t dat );
+	uint8_t owwait( uint8_t status );
 
 	const uint8_t dscrc_table[256] = {                 /* crc table */
 
