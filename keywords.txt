@@ -1,0 +1,96 @@
+###########################################
+# Syntax Coloring Map For DS2482
+###########################################
+
+###########################################
+# Datatypes (KEYWORD1)
+###########################################
+
+DS2482	KEYWORD1
+
+
+###########################################
+# DS2482 I2C-to-onewire bridge constants
+###########################################
+
+#DS2482 command definitions
+CMD_DRST	LITERAL1
+CMD_WCFG	LITERAL1
+CMD_1WRS	LITERAL1
+CMD_1WSB	LITERAL1
+CMD_1WWB	LITERAL1
+CMD_1WRB	LITERAL1
+CMD_WWBP	LITERAL1
+CMD_SRP	LITERAL1
+CMD_1WT	LITERAL1
+
+POLL_LIMIT	LITERAL1
+
+#DS2482 status register bit number names
+ST_1WB	LITERAL1
+ST_PPD	LITERAL1
+ST_SD	LITERAL1
+ST_LL	LITERAL1
+ST_RST	LITERAL1
+ST_SBR	LITERAL1
+ST_TSB	LITERAL1
+ST_DIR	LITERAL1
+
+#cofiguration settings - register bit number names
+CONFIG_APU	LITERAL1
+APU 0	LITERAL1
+SPU 2	LITERAL1
+wWS 3	LITERAL1
+MODE_STANDARD	LITERAL1
+MODE_STRONG	LITERAL1
+
+
+
+###########################################
+# one-wire device Library constants
+###########################################
+
+##DS18B20 temp sensor definitions
+#ROM cmds
+CSRCH	LITERAL1
+CREAD	LITERAL1
+CMTCH	LITERAL1
+CSKRM	LITERAL1
+CASCH	LITERAL1
+#device function cmds
+CCVRT	LITERAL1
+CWSPD	LITERAL1
+CRSPD	LITERAL1
+CCYPD	LITERAL1
+CRCEE	LITERAL1
+CRPWR	LITERAL1
+
+
+
+###########################################
+# Methods and Functions (KEYWORD2)
+###########################################
+
+begin	KEYWORD2
+DS2482_reset	KEYWORD2
+DS2482_detect	KEYWORD2
+DS2482_write_config	KEYWORD2
+OWReset	KEYWORD2
+OWTouchBit	KEYWORD2
+OWTouchByte	KEYWORD2
+OWSearch	KEYWORD2
+OWNext	KEYWORD2
+DS2482_search_triplet	KEYWORD2
+OWWriteBytePower	KEYWORD2
+OWReadBitPower	KEYWORD2
+OWLevel	KEYWORD2
+
+
+###########################################
+# objects created in the example sketches.
+###########################################
+
+i2cBridge	KEYWORD3
+i2ow	KEYWORD3
+
+
