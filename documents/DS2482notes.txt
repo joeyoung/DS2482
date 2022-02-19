@@ -1,0 +1,18 @@
+Notes about DS2482 library - Feb 19/22
+
+The schematic diagram I2CbridgeTo1-wire.pdf shows a test setup used to verify
+the library operation. The low-voltage power supply, the power switching, and
+the 5V to LV shifting are not necessary for testing the library functions, but
+were part of an arduino simulation for testing the DS2482 library functions 
+to be used in another datalogger project. 
+
+The library has defined a begin( ) function which in present version is empty.
+It is unnecessary but harmless to include begin( ) in setup for this version.
+
+The DS2482.h file has a #define DEBUG commented out. If you uncomment that
+define, there are a few Serial.print( ) functions showing status, timeout
+counts, and so forth which can be helpful in isolating problems. Serial needs
+to be available for this output to work.
+
+
+
